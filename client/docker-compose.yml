@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  nuxt:
+    image: node:16
+    working_dir: "/var/www/app"
+    environment:
+      - HOST=0.0.0.0
+      - COMPOSE_PROJECT_NAME=nft-client
+    volumes:
+      - ./:/var/www/app
