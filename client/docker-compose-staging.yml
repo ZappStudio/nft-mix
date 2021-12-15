@@ -1,0 +1,9 @@
+
+
+version: "3"
+
+services:
+  nuxt:
+    ports:
+      - "9005:3000"
+    command: yarn start
