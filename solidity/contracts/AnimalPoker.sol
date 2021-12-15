@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
-contract AnymalPoker is ERC721Enumerable, Ownable {
+contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
   using Address for address;
+
+  bytes32 internal keyHash;
+  uint256 internal fee;
 
   // Starting and stopping sale, presale and whitelist
   bool public saleActive = false;
@@ -35,14 +39,28 @@ contract AnymalPoker is ERC721Enumerable, Ownable {
   // List of addresses that have a number of reserved tokens for whitelist
   mapping(address => uint256) public whitelistReserved;
 
-  constructor() ERC721("Funky Crocs", "FNK") {
-    price = initial_price;
+  constructor(
+    address _VRFCoordinator,
+    address _LinkToken,
+    bytes32 _keyhash
+  )
+    public
+    VRFConsumerBase(_VRFCoordinator, _LinkToken)
+    ERC721("Funky Crocs", "FNK")
+  {
+    keyHash = _keyhash;
+    fee = 0.1 * 10**18;
   }
 
   // Override so the openzeppelin tokenURI() method will use this method to create the full tokenURI instead
   function _baseURI() internal view virtual override returns (string memory) {
     return baseTokenURI;
   }
+
+  function fulfillRandomness(bytes32 requestId, uint256 randomNumber)
+    internal
+    override
+  {}
 
   // See which address owns which tokens
   function tokensOfOwner(address addr) public view returns (uint256[] memory) {
