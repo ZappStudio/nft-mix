@@ -135,8 +135,8 @@ Metadata is the URI needed to upload data. You can either:
 ### If you want to upload to IPFS yourself
 
 Download [IPFS](https://ipfs.io/) 
-Set `export IPFS_URL=http://127.0.0.1:5001` and `export UPLOAD_IPFS=true` environment variables
-Run the IPFS daemon: `ipfs daemon`
+ipfs daemonSet `export IPFS_URL=http://127.0.0.1:5001` and `export UPLOAD_IPFS=true` environment variables
+Run the IPFS daemon: ``
 Then Run
 ```
 brownie run scripts/advanced_collectible/create_metadata.py --network rinkeby
