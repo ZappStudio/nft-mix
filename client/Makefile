@@ -6,9 +6,7 @@ development-down:
 	docker-compose -f docker-compose.yml -f docker-compose-development.yml down
 
 staging:
-	docker-compose -f docker-compose.yml -f docker-compose-staging.yml exec nuxt yarn install
-	docker-compose -f docker-compose.yml -f docker-compose-staging.yml exec nuxt yarn build
-	docker-compose -f docker-compose.yml -f docker-compose-staging.yml up -d --force-recreate
+	docker-compose -f docker-compose.yml -f docker-compose-staging.yml up --force-recreate --build
 
 staging-down:
 	docker-compose -f docker-compose.yml -f docker-compose-staging.yml down
