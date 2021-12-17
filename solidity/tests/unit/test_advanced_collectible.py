@@ -7,6 +7,7 @@ from scripts.helpful_scripts import (
 )
 
 
+
 def test_can_create_advanced_collectible(
     get_keyhash,
     chainlink_fee,
@@ -20,12 +21,14 @@ def test_can_create_advanced_collectible(
         get_keyhash,
         {"from": get_account()},
     )
+    anymal_poker.setSaleActive(True)
+
     get_contract("link_token").transfer(
         anymal_poker.address, chainlink_fee * 3, {"from": get_account()}
     )
     # Act
-    transaction_receipt = anymal_poker.createCollectible(
-        "None", {"from": get_account()}
+    transaction_receipt = anymal_poker.mintToken(
+        1, {"from": get_account()}
     )
     requestId = transaction_receipt.events["requestedCollectible"]["requestId"]
     assert isinstance(transaction_receipt.txid, str)
