@@ -1,9 +1,6 @@
 <script>
-import VueMetamask from 'vue-metamask'
-
 export default {
   name: 'IndexPage',
-  components: { VueMetamask },
   data() {
     return {
       web3: null,
