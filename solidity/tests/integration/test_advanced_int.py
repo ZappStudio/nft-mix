@@ -1,5 +1,5 @@
 import pytest
-from brownie import network, AnymalPoker
+from brownie import network, AnimalPoker
 from scripts.helpful_scripts import (
     get_account,
     get_contract,
@@ -15,7 +15,7 @@ def test_can_create_advanced_collectible_integration(
     # Arrange
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         pytest.skip("Only for integration testing")
-    anymal_poker = AnymalPoker.deploy(
+    anymal_poker = AnimalPoker.deploy(
         get_contract("vrf_coordinator").address,
         get_contract("link_token").address,
         get_keyhash,

@@ -2,7 +2,7 @@
 import os
 import requests
 import json
-from brownie import AnymalPoker, network
+from brownie import AnimalPoker, network
 from metadata import sample_metadata
 from scripts.helpful_scripts import get_breed
 from pathlib import Path
@@ -20,7 +20,7 @@ breed_to_image_uri = {
 
 def main():
     print("Working on " + network.show_active())
-    animal_poker = AnymalPoker[len(AnymalPoker) - 1]
+    animal_poker = AnimalPoker[len(AnimalPoker) - 1]
     number_of_advanced_collectibles = animal_poker.tokenCounter()
     print(
         "The number of tokens you've deployed is: "

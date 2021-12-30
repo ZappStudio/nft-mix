@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from brownie import AdvancedCollectible, accounts, network, config, interface
+from brownie import AnimalPoker, accounts, network, config, interface
 import json
 
 

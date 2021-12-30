@@ -4,14 +4,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
-import "./RandomGenerator.sol" as RandomGenerator;
+import "./RandomGenerator.sol";
+import "./libraries/SharedStructs.sol";
 
-contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
+contract AnimalPoker is ERC721Enumerable, RandomGenerator {
     using Address for address;
-
-    bytes32 internal keyHash;
-    uint256 internal fee;
-    uint256 public tokenCounter;
 
     // Starting and stopping sale, presale and whitelist
     bool public saleActive = false;
@@ -42,8 +39,8 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
 
     // Events
     event requestedCollectible(bytes32 indexed requestId);
-
     event numberGenerated(bytes32 indexed requestId);
+    event requestMinted(bytes32 indexed requestId);
 
     // List of addresses that have a number of reserved tokens for whitelist
     mapping(address => uint256) public whitelistReserved;
@@ -56,34 +53,18 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
     constructor(
         address _VRFCoordinator,
         address _LinkToken,
-        bytes32 _keyhash
-    ) VRFConsumerBase(_VRFCoordinator, _LinkToken) ERC721("Funky Crocs", "FNK") {
-        keyHash = _keyhash;
-        fee = 0.1 * 10 ** 18;
+        bytes32 _keyhash,
+        uint256 _fee
+    )
+    RandomGenerator(_VRFCoordinator, _LinkToken, _keyhash,_fee)
+    ERC721("Anymal Poker", "APD")
+    {
+
     }
 
     // Override so the openzeppelin tokenURI() method will use this method to create the full tokenURI instead
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
-    }
-
-    function fulfillRandomness(bytes32 requestId, uint256 randomNumber)
-    internal
-    override
-    {
-        //uint256 randomResult = (randomness % 50) + 1;
-       // uint256[] memory expandedValues = expand(randomResult, 10);
-
-        //address owner = requestIdToSender[requestId];
-        //string memory tokenURI = requestIdToTokenURI[requestId];
-        //uint256 newItemId = tokenCounter;
-        //_safeMint(owner, newItemId);
-        //setTokenURI(newItemId, tokenURI);
-
-        //Cards card = Cards(randomNumber % 3);
-        //tokenIdToBreed[newItemId] = card;
-        //requestIdToTokenId[requestId] = newItemId;
-        //tokenCounter = tokenCounter + 1;
     }
 
     // See which address owns which tokens
@@ -111,10 +92,15 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
         }
     }
 
+    function requestRandomFinished(RequestRandomCollectibles memory request) public override {
+        mintRequest(request.requestId);
+    }
+
+
     // Presale minting
     function mintPresale(uint256 _amount) public payable {
         uint256 supply = totalSupply();
-        require(presaleActive, "Sale isn't active");
+        require(presaleActive, "Presale isn't active");
         require(
             _amount > 0 && _amount <= MAX_MINT_PER_TX,
             "Can only mint between 1 and 20 tokens at once"
@@ -124,9 +110,9 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
             "Can't mint more than max supply"
         );
         require(msg.value == price * _amount, "Wrong amount of ETH sent");
-        for (uint256 i; i < _amount; i++) {
-            _safeMint(msg.sender, supply + i);
-        }
+
+        bytes32 requestId = requestRandom(1, MAX_SUPPLY, _amount);
+        emit requestedCollectible(requestId);
     }
 
     // Standard mint function
@@ -140,8 +126,40 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
         require(supply + _amount <= MAX_SUPPLY, "Can't mint more than max supply");
         require(msg.value == price * _amount, "Wrong amount of ETH sent");
 
-        bytes32 requestId = requestRandomness(keyHash, fee);
+        bytes32 requestId = requestRandom(1, MAX_SUPPLY, _amount);
         emit requestedCollectible(requestId);
+    }
+
+    /*
+     * This request is problematic in order to protect we have to get request from random request
+     * We have to attach to sender, to avoid minting hack
+     * Minting all received request, but we don't use this information and we query contract with queryid
+     * If random it will be minted, we use as offset in order to keep randomly.
+     *
+     */
+    function mintRequest(bytes32 requestId) public {
+        RequestRandomCollectibles memory safeRequest = getRequestByRequestId(
+            requestId
+        );
+        require(
+            msg.sender == safeRequest.sender,
+            "This request is not for your user!!"
+        );
+
+        for (uint256 i; i < safeRequest.randomValues.length; i++) {
+            uint256 random = safeRequest.randomValues[i];
+            if (_exists(random)) {
+                for (uint256 j = random; j < MAX_SUPPLY; j++) {
+                    if (!_exists(i)) {
+                        _safeMint(msg.sender, j);
+                    }
+                }
+            } else {
+                _safeMint(msg.sender, random);
+            }
+        }
+
+        emit requestMinted(requestId);
     }
 
     // Admin minting function to reserve tokens for the team, collabs, customs and giveaways
@@ -204,17 +222,4 @@ contract AnymalPoker is VRFConsumerBase, ERC721Enumerable, Ownable {
         require(payable(a2).send(percent * 30));
         require(payable(a3).send(percent * 30));
     }
-
-
-    /**
-     * Chainlink function to expand a randomvalue in more values
-     */
-    function expand(uint256 randomValue, uint256 n) public pure returns (uint256[] memory expandedValues) {
-        expandedValues = new uint256[](n);
-        for (uint256 i = 0; i < n; i++) {
-            expandedValues[i] = uint256(keccak256(abi.encode(randomValue, i)));
-        }
-        return expandedValues;
-    }
-
 }
