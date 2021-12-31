@@ -53,10 +53,9 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
     constructor(
         address _VRFCoordinator,
         address _LinkToken,
-        bytes32 _keyhash,
-        uint256 _fee
+        bytes32 _keyhash
     )
-    RandomGenerator(_VRFCoordinator, _LinkToken, _keyhash,_fee)
+    RandomGenerator(_VRFCoordinator, _LinkToken, _keyhash)
     ERC721("Anymal Poker", "APD")
     {
 
@@ -117,6 +116,7 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
 
     // Standard mint function
     function mintToken(uint256 _amount) public payable {
+
         uint256 supply = totalSupply();
         require(saleActive, "Sale isn't active");
         require(
@@ -126,7 +126,7 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
         require(supply + _amount <= MAX_SUPPLY, "Can't mint more than max supply");
         require(msg.value == price * _amount, "Wrong amount of ETH sent");
 
-        bytes32 requestId = requestRandom(1, MAX_SUPPLY, _amount);
+        bytes32 requestId = super.requestRandom(1, MAX_SUPPLY, _amount);
         emit requestedCollectible(requestId);
     }
 
@@ -141,10 +141,8 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
         RequestRandomCollectibles memory safeRequest = getRequestByRequestId(
             requestId
         );
-        require(
-            msg.sender == safeRequest.sender,
-            "This request is not for your user!!"
-        );
+        require(requests[requestId].sender == msg.sender || msg.sender == VRFCoordinator, "This request is not your request!");
+
 
         for (uint256 i; i < safeRequest.randomValues.length; i++) {
             uint256 random = safeRequest.randomValues[i];
@@ -152,12 +150,27 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
                 for (uint256 j = random; j < MAX_SUPPLY; j++) {
                     if (!_exists(i)) {
                         _safeMint(msg.sender, j);
+                        break;
                     }
                 }
             } else {
-                _safeMint(msg.sender, random);
+                _safeMint(requests[requestId].sender, random);
             }
         }
+
+
+        /*    for (uint256 i; i < safeRequest.randomValues.length; i++) {
+                uint256 random = safeRequest.randomValues[i];
+                if (_exists(random)) {
+                    for (uint256 j = random; j < MAX_SUPPLY; j++) {
+                        if (!_exists(i)) {
+                            _safeMint(msg.sender, j);
+                        }
+                    }
+                } else {
+                    _safeMint(msg.sender, random);
+                }
+            }*/
 
         emit requestMinted(requestId);
     }

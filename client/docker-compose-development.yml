@@ -10,3 +10,4 @@ services:
     volumes:
       - ./:/var/www/app
     command: yarn dev
+

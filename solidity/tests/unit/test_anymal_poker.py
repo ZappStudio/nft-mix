@@ -41,8 +41,8 @@ def make_sale_active():
     transaction_receipt = pytest.animal_poker.mintToken(AMOUNT_NUMBERS, {"from": pytest.owner_address})
 
     request_id = transaction_receipt.events["requestedCollectible"]["requestId"]
-    pytest.vrf_coordinator.callBackWithRandomness(
-        request_id, 777, pytest.animal_poker.address, {"from": pytest.owner_address}
+    transaction_coordinator = pytest.vrf_coordinator.callBackWithRandomness(
+        request_id, 4, pytest.animal_poker.address, {"from": get_account()}
     )
     assert isinstance(transaction_receipt.txid, str)
     return request_id
@@ -69,28 +69,3 @@ def test_check_request_id():
     assert request[3] == AMOUNT_NUMBERS
     assert LIMIT_DOWN == request[4]
     assert LIMIT_TOP == request[5]
-
-#
-# def test_can_create_advanced_collectible(
-#         get_keyhash,
-#         chainlink_fee,
-# ):
-#     check_local_testing()
-#
-#     pytest.animal_poker.setSaleActive(True)
-#
-#     get_contract("link_token").transfer(
-#         pytest.animal_poker.address, chainlink_fee * 3, {"from": get_account()}
-#     )
-#     # Act
-#     transaction_receipt = pytest.animal_poker.mintToken(
-#         10, {"from": get_account()}
-#     )
-#     requestId = transaction_receipt.events["requestedCollectible"]["requestId"]
-#     assert isinstance(transaction_receipt.txid, str)
-#     get_contract("vrf_coordinator").callBackWithRandomness(
-#         requestId, 777, pytest.animal_poker.address, {"from": get_account()}
-#     )
-#     # Assert
-#     assert pytest.animal_poker.tokenCounter() == 10
-#     assert isinstance(pytest.animal_poker.tokenCounter(), int)

@@ -11,10 +11,11 @@ export default {
   methods: {
     onComplete(data) {
       this.web3 = data
+      this.getContract()
     },
     async getContract() {
       try {
-        const contractPath = '../../solidity/contracts/test_contracts/test.json'
+        const contractPath = '../../solidity/build/contracts/AnimalPoker.json'
         const response = await fetch(contractPath)
         const data = await response.json()
         const netId = await web3.eth.net.getId()
@@ -23,6 +24,13 @@ export default {
           data.abi,
           deployedNetwork && deployedNetwork.address
         )
+
+        console.log("Inicializando escuchador eventos")
+        let transferEvent = this.contract.Transferred({}, {fromBlock: 0, toBlock: 'latest'})
+        transferEvent.get((error, logs) => {
+          // we have the logs, now print them
+          logs.forEach(log => console.log(log.args))
+        })
         return contract
       } catch (e) {
         console.log(e)
@@ -34,7 +42,7 @@ export default {
 
 <template>
   <div id="demo">
-    <vue-metamask userMessage="msg" @onComplete="onComplete" />
+    <vue-metamask userMessage="msg" @onComplete="onComplete"/>
     <button
       v-if="web3"
       @click="getContract"

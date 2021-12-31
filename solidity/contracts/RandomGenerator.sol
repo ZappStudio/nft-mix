@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./libraries/SharedStructs.sol";
+import "./libraries/SharedStructs.sol";
 
 contract RandomGenerator is VRFConsumerBase, Ownable {
     using Address for address;
@@ -13,7 +14,7 @@ contract RandomGenerator is VRFConsumerBase, Ownable {
      * It's better execute event and access information inside contract
      * To be sure the information it's trustworthy
      **/
-    event EventRequestRandomsFinished();
+    event EventRequestRandomFinished(RequestRandomCollectibles request);
     event EventRequestInitialized(bytes32 indexed requestId);
 
     //Vars
@@ -21,24 +22,24 @@ contract RandomGenerator is VRFConsumerBase, Ownable {
     bytes32 internal keyHash;
     uint256 internal fee;
     address internal linkToken;
+    address internal VRFCoordinator;
 
     constructor(
         address _VRFCoordinator,
         address _LinkToken,
-        bytes32 _keyhash,
-        uint256 _fee
+        bytes32 _keyhash
     ) VRFConsumerBase(_VRFCoordinator, _LinkToken) {
         linkToken = _LinkToken;
         keyHash = _keyhash;
-        // fee = 0.1 * 10**18;
-        fee = _fee;
+        VRFCoordinator = _VRFCoordinator;
+        fee = 0.1 * 10 ** 18;
     }
 
     function getRequestByRequestId(bytes32 requestId)
     public
     returns (RequestRandomCollectibles memory query)
     {
-        require(requests[requestId].sender == msg.sender, "This request is not your request!");
+        require(requests[requestId].sender == msg.sender || msg.sender == VRFCoordinator, "This request is not your request!");
         return requests[requestId];
     }
 
@@ -52,6 +53,7 @@ contract RandomGenerator is VRFConsumerBase, Ownable {
         uint256 limitTop,
         uint256 amountRequested
     ) public returns (bytes32 requestId) {
+        //  require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
         RequestRandomCollectibles memory newRequest;
         newRequest.sender = msg.sender;
         newRequest.requestId = requestRandomness(keyHash, fee);
@@ -72,9 +74,13 @@ contract RandomGenerator is VRFConsumerBase, Ownable {
     internal
     override
     {
+
         RequestRandomCollectibles memory requestRead = getRequestByRequestId(
             requestId
         );
+
+        emit EventRequestRandomFinished(requestRead);
+
         uint256 randomResult = coerceAtLimits(
             requestRead.limitDown,
             requestRead.limitTop,
@@ -86,10 +92,11 @@ contract RandomGenerator is VRFConsumerBase, Ownable {
             randomResult,
             requestRead.amountRequested
         );
-        requests[requestId].randomValues = expandedValues;
-        requestRandomFinished(requestRead);
+        requestRead.randomValues = expandedValues;
+        requests[requestId] = requestRead;
 
-        emit EventRequestRandomsFinished();
+       // requests[requestId].randomValues = expandedValues;
+        requestRandomFinished(requestRead);
     }
 
     function requestRandomFinished(RequestRandomCollectibles memory requestRandomCollectibles) public virtual {}

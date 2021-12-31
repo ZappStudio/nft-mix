@@ -15,9 +15,11 @@ AMOUNT_NUMBERS = 10
 
 
 def pytest_namespace():
-    return {'random_generator': 0,
-            'animal_poker': 0,
-            'owner_address': 0}
+    return {
+        'random_generator': 0,
+        'animal_poker': 0,
+        'owner_address': 0
+    }
 
 
 def deploy(get_keyhash,
@@ -31,7 +33,6 @@ def deploy(get_keyhash,
         pytest.vrf_coordinator.address,
         pytest.link_token.address,
         get_keyhash,
-        chainlink_fee,
         {"from": get_account()},
     )
 
@@ -39,7 +40,6 @@ def deploy(get_keyhash,
         pytest.vrf_coordinator.address,
         pytest.link_token.address,
         get_keyhash,
-        chainlink_fee,
         {"from": get_account()},
     )
 
@@ -48,11 +48,10 @@ def deploy(get_keyhash,
     pytest.owner_address = get_account()
 
     pytest.link_token.transfer(
-        random_generator.address, chainlink_fee * 10, {"from": get_account()}
+        random_generator.address, chainlink_fee * 3, {"from": get_account()}
     )
-
     pytest.link_token.transfer(
-        animal_poker.address, chainlink_fee * 10, {"from": get_account()}
+        animal_poker.address, chainlink_fee * 3, {"from": get_account()}
     )
 
 
