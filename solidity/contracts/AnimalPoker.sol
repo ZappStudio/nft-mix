@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./RandomGenerator.sol";
 import "./libraries/SharedStructs.sol";
+import "./Erc721EnumerableLazyMinting.sol";
 
-contract AnimalPoker is ERC721Enumerable, RandomGenerator {
+contract AnimalPoker is RandomGenerator, Erc721EnumerableLazyMinting {
     using Address for address;
 
     // Starting and stopping sale, presale and whitelist
@@ -28,7 +28,7 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
     uint256 public constant MAX_MINT_PER_TX = 20;
 
     // The base link that leads to the image / video of the token
-    string public baseTokenURI = "https://api.funkycrocs.io/";
+    string public baseTokenURI = "https://animalpoker.zapp.dev/";
 
     /* Team addresses for withdrawals */
     address public a1;
@@ -56,14 +56,8 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
         bytes32 _keyhash
     )
     RandomGenerator(_VRFCoordinator, _LinkToken, _keyhash)
-    ERC721("Anymal Poker", "APD")
+    Erc721EnumerableLazyMinting("Animal Poker", "APD")
     {
-
-    }
-
-    // Override so the openzeppelin tokenURI() method will use this method to create the full tokenURI instead
-    function _baseURI() internal view virtual override returns (string memory) {
-        return baseTokenURI;
     }
 
     // See which address owns which tokens
@@ -133,16 +127,14 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
     /*
      * This request is problematic in order to protect we have to get request from random request
      * We have to attach to sender, to avoid minting hack
-     * Minting all received request, but we don't use this information and we query contract with queryid
+     * Minting all received request, but we don't use this information and we query contract with query id
      * If random it will be minted, we use as offset in order to keep randomly.
-     *
      */
     function mintRequest(bytes32 requestId) public {
         RequestRandomCollectibles memory safeRequest = getRequestByRequestId(
             requestId
         );
         require(requests[requestId].sender == msg.sender || msg.sender == VRFCoordinator, "This request is not your request!");
-
 
         for (uint256 i; i < safeRequest.randomValues.length; i++) {
             uint256 random = safeRequest.randomValues[i];
@@ -157,20 +149,6 @@ contract AnimalPoker is ERC721Enumerable, RandomGenerator {
                 _safeMint(requests[requestId].sender, random);
             }
         }
-
-
-        /*    for (uint256 i; i < safeRequest.randomValues.length; i++) {
-                uint256 random = safeRequest.randomValues[i];
-                if (_exists(random)) {
-                    for (uint256 j = random; j < MAX_SUPPLY; j++) {
-                        if (!_exists(i)) {
-                            _safeMint(msg.sender, j);
-                        }
-                    }
-                } else {
-                    _safeMint(msg.sender, random);
-                }
-            }*/
 
         emit requestMinted(requestId);
     }

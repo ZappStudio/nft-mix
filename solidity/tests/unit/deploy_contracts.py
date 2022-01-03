@@ -12,6 +12,11 @@ from scripts.helpful_scripts import (
 LIMIT_TOP = 10000
 LIMIT_DOWN = 1
 AMOUNT_NUMBERS = 10
+NAME_CONTRACT = "Animal Poker"
+SYMBOL_CONTRACT = "APD"
+BASE_URI_CONTRACT = "https://animalpoker.zapp.dev/"
+SIGNING_DOMAIN_NAME = NAME_CONTRACT
+SIGNING_DOMAIN_VERSION = "1.0.0"
 
 
 def pytest_namespace():
